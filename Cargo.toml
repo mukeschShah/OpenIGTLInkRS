@@ -1,0 +1,7 @@
+[package]
+name = "igtl"
+version = "0.1.0"
+authors = ["Mukesch Johannes Shah  <mukesch.shah@gmail.com>"]
+
+[dependencies]
+bytebuffer = "0.2.1"
