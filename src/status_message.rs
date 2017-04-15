@@ -2,7 +2,8 @@ extern crate time;
 
 use message_base::*;
 use bytebuffer::*;
-use crc::{crc64, Hasher64};
+//use crc::{crc64, Hasher64};
+use util::*;
 
 #[allow(dead_code)]
 
@@ -157,8 +158,19 @@ impl StatusMessage {
         self.base.time_stamp_sec_fraction = time::get_time().nsec as u32;
         // https://www.reddit.com/r/rust/comments/5k5mez/convert_vecu8_to_u8/
         let c: &[u8] = &bb.to_bytes()[..]; // c: &[u8]
-        let mut digest = crc64::checksum_ecma(c);
-        self.base.crc64 = digest;
+        // let mut digest = crc64::checksum_ecma(c);
+        // self.base.crc64 = digest;
+
+        // // new crc try
+        // //::new_with_initial(0x42F0E1EBA9EA3693, 0u64);
+        // //let mut digest = crc64::Digest::new(0x42F0E1EBA9EA3693, 0);
+        // let mut digest = crc64::Digest::new_with_initial(0xC96C5795D7870F42, 0);
+        // digest.write(c);
+        // //assert_eq!(digest.sum64(), 0x995dc9bbdf1939fa);
+        // self.base.crc64 = digest.sum64();
+
+        self.base.crc64 = crc64(c, 0);
+
         //println!("diggest: {:?}", digest);
         //println!("string bb : {:?}", String::from_utf8_lossy(c));
         let mut hb: ByteBuffer = self.base.to_bytebuffer();
@@ -195,7 +207,7 @@ fn status_message() {
     assert_eq!(test_object.get_status_string(), "Die ist mein Status");
 
     assert_eq!(test_object.calculate_body_size(),
-               "Die ist mein Status".to_string().len() + 2 + (64 / 8) + 20);
+               "Die ist mein Status".to_string().len() + 2 + (64 / 8) + 20 + 1);
 
     // test to_bytebuffer
     assert_eq!(test_object.to_bytebuffer().len(),
