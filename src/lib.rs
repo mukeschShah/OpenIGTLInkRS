@@ -5,7 +5,7 @@
 extern crate bytebuffer;
 // to get the timestamp;
 extern crate time;
-extern crate crc;
+
 // mod use message_base::MessageBase; // <-- Use one::one::bar
 // #[path = "message_base.rs"]
 pub mod message_base;

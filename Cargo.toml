@@ -6,4 +6,3 @@ authors = ["Mukesch Johannes Shah  <mukesch.shah@gmail.com>"]
 [dependencies]
 bytebuffer = "0.2.1"
 time = "0.1"
-crc = "1.4.0"

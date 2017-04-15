@@ -158,16 +158,6 @@ impl StatusMessage {
         self.base.time_stamp_sec_fraction = time::get_time().nsec as u32;
         // https://www.reddit.com/r/rust/comments/5k5mez/convert_vecu8_to_u8/
         let c: &[u8] = &bb.to_bytes()[..]; // c: &[u8]
-        // let mut digest = crc64::checksum_ecma(c);
-        // self.base.crc64 = digest;
-
-        // // new crc try
-        // //::new_with_initial(0x42F0E1EBA9EA3693, 0u64);
-        // //let mut digest = crc64::Digest::new(0x42F0E1EBA9EA3693, 0);
-        // let mut digest = crc64::Digest::new_with_initial(0xC96C5795D7870F42, 0);
-        // digest.write(c);
-        // //assert_eq!(digest.sum64(), 0x995dc9bbdf1939fa);
-        // self.base.crc64 = digest.sum64();
 
         self.base.crc64 = crc64(c, 0);
 
@@ -178,9 +168,7 @@ impl StatusMessage {
         // concat hb and bb
         hb.write_bytes(&bb.to_bytes());
         //println!("hb: {:?}", hb.to_bytes());
-
         return hb;
-
     }
 
     // virtual int  PackContent();
