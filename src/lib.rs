@@ -2,6 +2,9 @@
 #![cfg(test)]
 
 extern crate bytebuffer;
+// to get the timestamp;
+extern crate time;
+extern crate crc;
 // mod use message_base::MessageBase; // <-- Use one::one::bar
 // #[path = "message_base.rs"]
 pub mod message_base;
@@ -15,9 +18,25 @@ pub mod status_message;
 
 #[cfg(test)]
 mod tests {
-    //use super::message_base::MessageBase;
+    // https://codereview.stackexchange.com/questions/110073/simple-tcp-client-in-rust
+    use std::io::prelude::*;
+    use std::net::TcpStream;
+    use super::status_message::StatusMessage;
     #[test]
     fn it_works() {
-        //let mut test_object = MessageBase::new();
+        const HOST: &'static str = "127.0.0.1:18944";
+        let mut t_o = StatusMessage::new();
+        t_o.set_error_name("OK!".to_string());
+        t_o.set_status_string("This is a test to send status message.".to_string());
+        t_o.set_sub_code(128);
+        let mut stream = TcpStream::connect(HOST).unwrap();
+
+        for i in 1..1 {
+            let response = stream.write(&t_o.to_bytebuffer().to_bytes()).unwrap();
+        }
+        let response = stream.write(&t_o.to_bytebuffer().to_bytes()).unwrap();
+        //println!(" länge: {:?}", t_o.to_bytebuffer().to_bytes().len());
+        print!("response  {:?}", response);
+
     }
 }

@@ -1,5 +1,9 @@
+extern crate time;
+
 use message_base::*;
 use bytebuffer::*;
+use crc::{crc64, Hasher64};
+
 #[allow(dead_code)]
 
 /// Status codes -- see igtl_status.h
@@ -49,12 +53,13 @@ impl StatusMessage {
             // Header
             base: MessageBase {
                 message_size: 58,
-                header_version: 2,
-                device_name: "STATUS".to_string(),
-                message_type: "Message Type".to_string(),
+                header_version: 1, // have to be 1 to test for ReceiverServer
+                device_name: "Device".to_string(),
+                message_type: "STATUS".to_string(),
                 time_stamp_sec: 0,
                 time_stamp_sec_fraction: 0,
                 body_size: 0,
+                crc64: 0,
                 is_header_unpacked: false,
                 is_body_unpacked: false,
                 is_body_packed: false,
@@ -62,8 +67,8 @@ impl StatusMessage {
             // Body
             code: STATUS_OK,
             sub_code: 0,
-            error_name: "Hello".to_string(),
-            status_message_string: "Hello".to_string(),
+            error_name: "error_name".to_string(),
+            status_message_string: "status_message_string".to_string(),
         }
     }
 
@@ -111,7 +116,7 @@ impl StatusMessage {
 
 
     fn calculate_body_size(&mut self) -> usize {
-        let body_size: usize = (2 + 8 + 20) + self.status_message_string.len();
+        let body_size: usize = (2 + 8 + 20) + self.status_message_string.len() + 1;
         self.base.body_size = body_size as u64;
         body_size
     }
@@ -137,16 +142,30 @@ impl StatusMessage {
 
         //let mut s = self.strin.clone();
         for (i, c) in self.status_message_string.chars().enumerate() {
-            array[i] = c as u8;
+            //array[i] = c as u8;
             bb.write_u8(c as u8);
         }
-
+        // make sure that the status message in the pack ends with '\0'
+        // this is a nasty error...because not mentiont in OpenIGTLink spec
+        bb.write_u8(0);
         // now the header part
 
         self.calculate_body_size(); // and write int into buffer;
+        // now set timestamp  set to time of wrapping, not alwas meaningful
+        // http://stackoverflow.com/questions/26593387/how-i-get-the-current-time-in-milliseconds
+        self.base.time_stamp_sec = time::get_time().sec as u32;
+        self.base.time_stamp_sec_fraction = time::get_time().nsec as u32;
+        // https://www.reddit.com/r/rust/comments/5k5mez/convert_vecu8_to_u8/
+        let c: &[u8] = &bb.to_bytes()[..]; // c: &[u8]
+        let mut digest = crc64::checksum_ecma(c);
+        self.base.crc64 = digest;
+        //println!("diggest: {:?}", digest);
+        //println!("string bb : {:?}", String::from_utf8_lossy(c));
         let mut hb: ByteBuffer = self.base.to_bytebuffer();
-
+        //println!("hb: {:?}", hb.to_bytes());
+        // concat hb and bb
         hb.write_bytes(&bb.to_bytes());
+        //println!("hb: {:?}", hb.to_bytes());
 
         return hb;
 
@@ -166,8 +185,8 @@ fn status_message() {
     test_object.set_code(5);
     assert_eq!(test_object.get_code(), 5);
 
-    test_object.set_sub_code(-10);
-    assert_eq!(test_object.get_sub_code(), -10);
+    test_object.set_sub_code(10);
+    assert_eq!(test_object.get_sub_code(), 10);
 
     test_object.set_error_name("my Error".to_string());
     assert_eq!(test_object.get_error_name(), "my Error");
@@ -175,7 +194,8 @@ fn status_message() {
     test_object.set_status_string("Die ist mein Status".to_string());
     assert_eq!(test_object.get_status_string(), "Die ist mein Status");
 
-    assert_eq!(test_object.calculate_body_size(), 19 + 2 + (64 / 8) + 20);
+    assert_eq!(test_object.calculate_body_size(),
+               "Die ist mein Status".to_string().len() + 2 + (64 / 8) + 20);
 
     // test to_bytebuffer
     assert_eq!(test_object.to_bytebuffer().len(),

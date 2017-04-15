@@ -4,8 +4,6 @@
 use bytebuffer::*;
 #[allow(dead_code)]
 
-
-
 pub struct MessageBase {
     pub message_size: i16,
     /// An unsigned short for the message format version
@@ -27,6 +25,8 @@ pub struct MessageBase {
     // not in original c++ implementation...but needed
     pub body_size: u64,
 
+    pub crc64: u64,
+
     /// Unpacking (deserialization) status for the header
     pub is_header_unpacked: bool,
 
@@ -47,6 +47,7 @@ impl MessageBase {
             message_type: "Message Type".to_string(),
             time_stamp_sec: 0,
             time_stamp_sec_fraction: 0,
+            crc64: 0,
             body_size: 0,
             is_header_unpacked: false,
             is_body_unpacked: false,
@@ -72,7 +73,7 @@ impl MessageBase {
 
 
     pub fn get_crc64(&self) -> u64 {
-        0
+        self.crc64
     }
 
     pub fn set_header_version(&mut self, version: u16) {
@@ -91,7 +92,7 @@ impl MessageBase {
 
         // convert the string to 8 array;
         let mut array: [u8; 12] = [0; 12];
-        let mut s = self.device_name.clone();
+        let mut s = self.message_type.clone();
         s.truncate(12);
         for (i, c) in s.chars().enumerate() {
             array[i] = c as u8;
@@ -99,13 +100,13 @@ impl MessageBase {
         buffer.write_bytes(&array);
 
         // convert the string to 8 array;
-        let mut array: [u8; 20] = [0; 20];
-        let mut s = self.message_type.clone();
-        s.truncate(20);
-        for (i, c) in s.chars().enumerate() {
-            array[i] = c as u8;
+        let mut array2: [u8; 20] = [0; 20];
+        let mut s2 = self.device_name.clone();
+        s2.truncate(20);
+        for (i, c) in s2.chars().enumerate() {
+            array2[i] = c as u8;
         }
-        buffer.write_bytes(&array);
+        buffer.write_bytes(&array2);
 
         buffer.write_u32(self.time_stamp_sec);
         buffer.write_u32(self.time_stamp_sec_fraction);
@@ -127,9 +128,6 @@ fn message_base_test() {
     test_object.set_header_version(2);
     assert_eq!(2, test_object.get_header_version());
 
-    // println!("ByteBuffer string: {}",
-    //         test_object.to_bytebuffer().to_string());
-    // is buffer.len() = 58;
     assert_eq!(58, test_object.to_bytebuffer().len());
 
 }
