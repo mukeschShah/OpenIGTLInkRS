@@ -2,7 +2,7 @@ extern crate time;
 
 use message_base::*;
 use bytebuffer::*;
-use crc::{crc64, Hasher64};
+
 
 #[allow(dead_code, unused_variables)]
 
@@ -61,6 +61,40 @@ impl TransformMessage {
         pos[2] = self.matrix[14];
         pos
     }
+    /// Sets normal vectors (or a rotation matrix) in the RAS coordinate system.
+    pub fn set_normals(&mut self, o: [f32; 9]) {
+        self.matrix[0] = o[0];
+        self.matrix[1] = o[1];
+        self.matrix[2] = o[2];
+
+        self.matrix[4] = o[3];
+        self.matrix[5] = o[4];
+        self.matrix[6] = o[5];
+
+        self.matrix[8] = o[6];
+        self.matrix[9] = o[7];
+        self.matrix[10] = o[8];
+    }
+
+    /// Gets normal vectors (or a rotation matrix) in the RAS coordinate system.
+    //void GetNormals(float o[3][3]);
+    pub fn get_normals(&self) -> [f32; 9] {
+        let mut o: [f32; 9] = [0f32; 9];
+        o[0] = self.matrix[0];
+        o[1] = self.matrix[1];
+        o[2] = self.matrix[2];
+
+        o[3] = self.matrix[4];
+        o[4] = self.matrix[5];
+        o[5] = self.matrix[6];
+
+        o[6] = self.matrix[8];
+        o[7] = self.matrix[9];
+        o[8] = self.matrix[10];
+
+        // return
+        o
+    }
 }
 
 
@@ -77,5 +111,10 @@ fn status_message() {
     assert_eq!(t_o.get_matrix(), test_array);
     let test_pos: [f32; 3] = [10.0, 11.0, 12.0];
     assert_eq!(t_o.get_postion(), test_pos);
+
+    test_array = [1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0, 3.0, 3.0, 3.0, 3.0, 4.0, 4.0, 4.0, 4.0];
+    let mut test_normals: [f32; 9] = [1.2, 1.3, 1.4, 1.0, 2.0, 2.0, 2.0, 2.0, 3.0];
+    t_o.set_normals(test_normals);
+    assert_eq!(t_o.get_normals(), test_normals);
 
 }

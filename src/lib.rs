@@ -23,7 +23,8 @@ mod tests {
     // https://codereview.stackexchange.com/questions/110073/simple-tcp-client-in-rust
     use std::io::prelude::*;
     use std::net::TcpStream;
-    use super::status_message::StatusMessage;
+    use message_base::OpenIGTLinkMessage;
+    use super::status_message::*;
     #[test]
     fn it_works() {
         const HOST: &'static str = "127.0.0.1:18944";

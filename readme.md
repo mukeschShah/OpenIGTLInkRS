@@ -2,3 +2,14 @@
 
 early alpha stage
 
+## testing
+
+using ReceiveServer
+
+```
+ReceiveServer 18944
+```
+
+```
+cargo test
+```

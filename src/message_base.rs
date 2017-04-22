@@ -38,8 +38,25 @@ pub struct MessageBase {
 }
 
 
-impl MessageBase {
-    pub fn new() -> MessageBase {
+pub trait OpenIGTLinkMessage {
+    fn new() -> Self; // Self stands for any type implementing A
+
+    fn to_bytebuffer(&mut self) -> ByteBuffer;
+    fn from_bytebuffer(&mut self, bb: ByteBuffer);
+
+    fn set_device_name(&mut self, name: String);
+    fn get_body_size(&self) -> u64;
+
+    fn get_device_name(&self) -> String;
+    fn get_crc64(&self) -> u64;
+    fn set_header_version(&mut self, version: u16);
+    fn get_header_version(&self) -> u16;
+}
+
+
+
+impl OpenIGTLinkMessage for MessageBase {
+    fn new() -> MessageBase {
         MessageBase {
             message_size: 58,
             header_version: 2,
@@ -55,11 +72,11 @@ impl MessageBase {
         }
     }
 
-    pub fn set_device_name(&mut self, name: String) {
+    fn set_device_name(&mut self, name: String) {
         self.device_name = name;
     }
     /// Gets the device name.
-    pub fn get_device_name(&self) -> String {
+    fn get_device_name(&self) -> String {
         // We know these bytes are valid, so just use `unwrap()`.
         let mut s = self.device_name.clone();
         s.truncate(12);
@@ -67,25 +84,52 @@ impl MessageBase {
     }
 
 
-    pub fn get_body_size(&self) -> u64 {
+    fn get_body_size(&self) -> u64 {
         self.body_size
     }
 
 
-    pub fn get_crc64(&self) -> u64 {
+    fn get_crc64(&self) -> u64 {
         self.crc64
     }
 
-    pub fn set_header_version(&mut self, version: u16) {
+    fn set_header_version(&mut self, version: u16) {
         self.header_version = version;
 
     }
 
-    pub fn get_header_version(&self) -> u16 {
+    fn get_header_version(&self) -> u16 {
         self.header_version
     }
 
-    pub fn to_bytebuffer(&self) -> ByteBuffer {
+
+    fn from_bytebuffer(&mut self, mut buffer: ByteBuffer) {
+        self.header_version = buffer.read_u16();
+        let mut array: [u8; 12] = [0; 12];
+
+        let mut xs: Vec<u8> = buffer.read_bytes(12);
+        let some_x = 0;
+        xs.retain(|&x| x != some_x);
+        self.message_type = String::from_utf8(xs).expect("Found invalid UTF-8");
+
+        // let s: String = String::from_utf8(buffer.read_bytes(12)).expect("Found invalid UTF-8");
+        // let split_str: Vec<&str> = s.split("\0").collect();
+        // self.message_type = split_str[0].to_string();
+
+        xs = buffer.read_bytes(20);
+
+        xs.retain(|&x| x != some_x);
+        self.device_name = String::from_utf8(xs).expect("Found invalid UTF-8");
+
+        self.time_stamp_sec = buffer.read_u32();
+        self.time_stamp_sec_fraction = buffer.read_u32();
+        self.body_size = buffer.read_u64();
+        self.crc64 = buffer.read_u64();
+
+    }
+
+    /// macking a bytebuffer... not such as unpack and pack
+    fn to_bytebuffer(&mut self) -> ByteBuffer {
         let mut buffer = ByteBuffer::new();
         buffer.clear();
         buffer.write_u16(self.header_version);
@@ -120,7 +164,7 @@ impl MessageBase {
 
 #[test]
 fn message_base_test() {
-
+    use message_base::OpenIGTLinkMessage;
     let mut test_object = MessageBase::new();
     test_object.set_device_name("hello".to_string());
     assert_eq!("hello".to_string(), test_object.get_device_name());
@@ -129,5 +173,9 @@ fn message_base_test() {
     assert_eq!(2, test_object.get_header_version());
 
     assert_eq!(58, test_object.to_bytebuffer().len());
+    let mut buffer = ByteBuffer::new();
+    buffer = test_object.to_bytebuffer();
+    test_object.from_bytebuffer(buffer);
+    assert_eq!("hello".to_string(), test_object.get_device_name());
 
 }

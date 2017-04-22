@@ -2,6 +2,7 @@ extern crate time;
 
 use message_base::*;
 use bytebuffer::*;
+use message_base::OpenIGTLinkMessage;
 //use crc::{crc64, Hasher64};
 use util::*;
 
@@ -48,8 +49,24 @@ pub struct StatusMessage {
     status_message_string: String,
 }
 
-impl StatusMessage {
-    pub fn new() -> StatusMessage {
+
+pub trait StatusMessageTrait: OpenIGTLinkMessage {
+    fn calculate_content_buffer_size(&self) -> u64;
+    fn get_status_string(&self) -> String;
+    fn set_status_string(&mut self, status_string: String);
+    fn get_error_name(&self) -> String;
+    fn set_error_name(&mut self, name: String);
+    fn set_code(&mut self, code: u16);
+    fn get_sub_code(&self) -> i64;
+    fn set_sub_code(&mut self, subcode: i64);
+    fn println(&self);
+    fn get_code(&self) -> u16;
+    fn calculate_body_size(&mut self) -> usize;
+}
+
+
+impl OpenIGTLinkMessage for StatusMessage {
+    fn new() -> StatusMessage {
         StatusMessage {
             // Header
             base: MessageBase {
@@ -73,56 +90,8 @@ impl StatusMessage {
         }
     }
 
-    /// Sets the status code.
-    pub fn set_code(&mut self, code: u16) {
-        self.code = code;
-    }
-    /// Gets the status code.
-    pub fn get_code(&self) -> u16 {
-        self.code
-    }
-    /// Sets the sub code.
-    pub fn set_sub_code(&mut self, subcode: i64) {
-        self.sub_code = subcode;
-    }
-
-    /// Gets the sub code.
-    pub fn get_sub_code(&self) -> i64 {
-        self.sub_code
-    }
-
-    /// Sets the error name. The error name can be defined by a developer.
-    pub fn set_error_name(&mut self, name: String) {
-        self.error_name = name;
-    }
-
-    /// Gets the error name.
-    pub fn get_error_name(&self) -> String {
-        self.error_name.clone()
-    }
-
-    /// Sets the status string.
-    pub fn set_status_string(&mut self, status_string: String) {
-        self.status_message_string = status_string;
-    }
-
-    /// Gets the status string.
-    pub fn get_status_string(&self) -> String {
-        self.status_message_string.clone()
-    }
-
-    fn calculate_content_buffer_size(&self) -> u64 {
-        unimplemented!();
-    }
-
-
-    fn calculate_body_size(&mut self) -> usize {
-        let body_size: usize = (2 + 8 + 20) + self.status_message_string.len() + 1;
-        self.base.body_size = body_size as u64;
-        body_size
-    }
     /// mutable because crc and body_size have to calculated and set
-    pub fn to_bytebuffer(&mut self) -> ByteBuffer {
+    fn to_bytebuffer(&mut self) -> ByteBuffer {
 
         // bodybuffer
         let mut bb: ByteBuffer = ByteBuffer::new();
@@ -171,14 +140,101 @@ impl StatusMessage {
         return hb;
     }
 
+    fn from_bytebuffer(&mut self, bb: ByteBuffer) {
+        unimplemented!();
+    }
+
+    fn set_device_name(&mut self, name: String) {
+        unimplemented!();
+    }
+    fn get_body_size(&self) -> u64 {
+        unimplemented!();
+    }
+
+    fn get_device_name(&self) -> String {
+        unimplemented!();
+    }
+    fn get_crc64(&self) -> u64 {
+        unimplemented!();
+    }
+    fn set_header_version(&mut self, version: u16) {
+        unimplemented!();
+    }
+    fn get_header_version(&self) -> u16 {
+        unimplemented!();
+    }
+}
+
+impl StatusMessageTrait for StatusMessage {
+    /// Sets the status code.
+    fn set_code(&mut self, code: u16) {
+        self.code = code;
+    }
+    /// Gets the status code.
+    fn get_code(&self) -> u16 {
+        self.code
+    }
+    /// Sets the sub code.
+    fn set_sub_code(&mut self, subcode: i64) {
+        self.sub_code = subcode;
+    }
+
+    /// Gets the sub code.
+    fn get_sub_code(&self) -> i64 {
+        self.sub_code
+    }
+
+    /// Sets the error name. The error name can be defined by a developer.
+    fn set_error_name(&mut self, name: String) {
+        self.error_name = name;
+    }
+
+    /// Gets the error name.
+    fn get_error_name(&self) -> String {
+        self.error_name.clone()
+    }
+
+    /// Sets the status string.
+    fn set_status_string(&mut self, status_string: String) {
+        self.status_message_string = status_string;
+    }
+
+    /// Gets the status string.
+    fn get_status_string(&self) -> String {
+        self.status_message_string.clone()
+    }
+
+    fn calculate_content_buffer_size(&self) -> u64 {
+        unimplemented!();
+    }
+
+
+    fn calculate_body_size(&mut self) -> usize {
+        let body_size: usize = (2 + 8 + 20) + self.status_message_string.len() + 1;
+        self.base.body_size = body_size as u64;
+        body_size
+    }
+
+
+    fn println(&self) {
+        println!("========== STATUS ==========");
+        println!(" Code      : {:?}", self.code);
+        println!(" SubCode   : {:?}", self.sub_code);
+        println!(" Error Name: {:?}", self.error_name);
+        println!(" Status    : {:?}", self.status_message_string);
+        println!("============================");
+    }
+
     // virtual int  PackContent();
     // virtual int  UnpackContent();
 }
 
 
-#[test]
-fn status_message() {
 
+
+#[test]
+
+fn status_message() {
     let mut test_object = StatusMessage::new();
     test_object.base.set_device_name("newStatus".to_string());
     // test setter and getter
@@ -200,4 +256,6 @@ fn status_message() {
     // test to_bytebuffer
     assert_eq!(test_object.to_bytebuffer().len(),
                test_object.calculate_body_size() + 58);
+
+    test_object.println();
 }
