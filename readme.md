@@ -4,7 +4,7 @@ early alpha stage
 
 ## testing
 
-using ReceiveServer
+using ReceiveServer for testing 
 
 ```
 ReceiveServer 18944
