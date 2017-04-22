@@ -3,6 +3,8 @@
 //!
 //! The foo crate is meant to be used for bar.
 
+// TODO: this have to to killed bevor deployint
+#![allow(dead_code,unused_variables,unused_mut,unused_assignments,unused_imports)]
 extern crate bytebuffer;
 // to get the timestamp;
 extern crate time;
