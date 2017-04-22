@@ -4,6 +4,8 @@
 use bytebuffer::*;
 #[allow(dead_code)]
 
+
+
 pub struct MessageBase {
     pub message_size: i16,
     /// An unsigned short for the message format version
@@ -39,8 +41,9 @@ pub struct MessageBase {
 
 
 pub trait OpenIGTLinkMessage {
+    /// construct an new message
     fn new() -> Self; // Self stands for any type implementing A
-
+    /// giving back a ByteBuffer...
     fn to_bytebuffer(&mut self) -> ByteBuffer;
     fn from_bytebuffer(&mut self, bb: ByteBuffer);
 

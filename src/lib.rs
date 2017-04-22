@@ -1,6 +1,7 @@
 
-#![cfg(test)]
-
+//! This is documentation for the `foo` crate.
+//!
+//! The foo crate is meant to be used for bar.
 
 extern crate bytebuffer;
 // to get the timestamp;
@@ -26,12 +27,22 @@ mod tests {
     use message_base::OpenIGTLinkMessage;
     use super::status_message::*;
     #[test]
-    fn it_works() {
+    fn generating_status_message() {
+        let mut t_o = StatusMessage::new();
+        t_o.set_error_name("OK!".to_string());
+        t_o.set_status_string("This is a test to send status message. MJS".to_string());
+        t_o.set_sub_code(128);
+
+    }
+    #[test]
+    fn sending_to_receiver_server() {
         const HOST: &'static str = "127.0.0.1:18944";
         let mut t_o = StatusMessage::new();
         t_o.set_error_name("OK!".to_string());
         t_o.set_status_string("This is a test to send status message. MJS".to_string());
         t_o.set_sub_code(128);
+
+
         let mut stream = TcpStream::connect(HOST).unwrap();
 
         for i in 1..10 {
